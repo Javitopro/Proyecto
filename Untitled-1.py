@@ -75,6 +75,7 @@ def MostrarAutores():
 #Gestionar els socis (alumnes) subscrits al servei de biblioteca.
 #Gestionar els préstecs i devolucions que realitzen diàriament els socis.
 
+
 def Accio():
     return int(input("Qué quieres hacer? \n -Agregar (1) \n -Eliminar (2) \n -Modificar (3) \n -Mostrar (4) \n"))
 
