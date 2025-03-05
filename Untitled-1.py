@@ -75,6 +75,7 @@ def MostrarAutores():
 #Gestionar els socis (alumnes) subscrits al servei de biblioteca.
 #Gestionar els préstecs i devolucions que realitzen diàriament els socis.
 
+
 def Accio():
     return int(input("Qué quieres hacer? \n -Agregar (1) \n -Eliminar (2) \n -Modificar (3) \n -Mostrar (4) \n"))
 
@@ -191,17 +192,49 @@ def GestioLlibres():
         Pregunta()
 
     elif(accio==3):
-        # Modificar el campo 'tlf' del registro
-        dni = '43064095E'
-        nuevo_tlf = 777888999
-        conexion.execute("UPDATE contactos SET tlf = ? WHERE dni = ?", (nuevo_tlf, dni))
+        opcion=int(input("Qué quieres modificar? \n -Libro (1) \n -Ejemplar (2) \n -Autor (3) \n"))
+        if(opcion==1):
+            MostrarLibros()
+            LibroId= int(input("Dime el ID del libro que quieres modificar: "))
+            cursor.execute("SELECT * FROM Libros WHERE LibroId=?", (LibroId,))
+            existe=cursor.fetchone()
+            if(existe!=None):
+                nuevo_titulo= input("Dime el nuevo título del libro: ")
+                nuevo_ISBN= int(input("Dime el nuevo código ISBN del libro: "))
+                nueva_editorial= input("Dime la nueva editorial del libro: ")
+                nuevas_paginas= int(input("Dime cuántas páginas tiene el libro: "))
+                conexion.execute("UPDATE Libros SET Titulo=?, ISBN=?, Editorial=?, Paginas=? WHERE LibroId=?", (nuevo_titulo, nuevo_ISBN, nueva_editorial, nuevas_paginas, LibroId))
+                conexion.commit()
+                print("Modificado correctamente.")
+            else:
+                print("No existe ese libro")
 
-        # Guardar los cambios
-        conexion.commit()
+        if(opcion==2):
+            MostrarEjemplares()
+            EjemplarId= int(input("Dime el ID del ejemplar que quieres modificar: "))
+            cursor.execute("SELECT * FROM Ejemplares WHERE EjemplarId=?", (EjemplarId,))
+            existe=cursor.fetchone()
+            if(existe!=None):
+                nueva_localizacion= input("Dime la nueva localización del ejemplar: ")
+                conexion.execute("UPDATE Ejemplares SET Localizacion=? WHERE EjemplarId=?", (nueva_localizacion, EjemplarId))
+                conexion.commit()
+                print("Modificado correctamente.")
+            else:
+                print("No existe ese ejemplar")
 
-        # Cierre de la conexión a la base de datos
+        if(opcion==3):
+            MostrarAutores()
+            AutorId= int(input("Dime el ID del autor que quieres modificar: "))
+            cursor.execute("SELECT * FROM Autores WHERE AutorId=?", (AutorId,))
+            existe=cursor.fetchone()
+            if(existe!=None):
+                nuevo_nombre= input("Dime el nuevo nombre del autor: ")
+                conexion.execute("UPDATE Autores SET Nombre=? WHERE AutorId=?", (nuevo_nombre, AutorId))
+                conexion.commit()
+                print("Modificado correctamente.")
+            else:
+                print("No existe ese autor")
         conexion.close()
-
         Pregunta()
     
     elif(accio==4):
