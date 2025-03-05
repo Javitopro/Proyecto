@@ -79,7 +79,7 @@ def MostrarAutores():
 def Accio():
     return int(input("Qué quieres hacer? \n -Agregar (1) \n -Eliminar (2) \n -Modificar (3) \n -Mostrar (4) \n"))
 
-def GestioLlibres():
+def GestionLibros():
     conexion = sqlite3.connect('biblio.db')
     cursor=conexion.cursor()
     accio=Accio()
@@ -254,22 +254,22 @@ def GestioLlibres():
         Accio()
     
 
-def GestioSocis():
+def GestionAlumnos():
     print("las cosas")
 
-def GestioPrestecs():
+def GestionPrestamos():
     print("las cosas")
 
 def Pregunta():
     taula=int(input("Qué quieres gestionar? \n -Salir (0) \n -Libros/Ejemplares (1) \n -Socios (2) \n -Préstamos (3) \n -Crear BD (4) \n"))
     if(taula==1):
-        GestioLlibres()
+        GestionLibros()
 
     elif(taula==2):
-        GestioSocis()
+        GestionAlumnos()
 
     elif(taula==3):
-        GestioPrestecs()
+        GestionPrestamos()
 
     elif(taula==4):
         CrearBD()
