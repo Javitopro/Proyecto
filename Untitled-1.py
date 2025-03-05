@@ -1,0 +1,251 @@
+import sqlite3
+
+def CrearBD():
+    conexion = sqlite3.connect('biblio.db')
+    conexion.execute('''CREATE TABLE `Alumnes` (
+    `AlumneID` INTEGER PRIMARY KEY AUTOINCREMENT,
+    `Nombre` TEXT NOT NULL,
+    `Telefono` INTEGER,
+    `Direccion` TEXT NOT NULL
+    );''')
+    conexion.execute('''CREATE TABLE `Autores` (
+    `AutorId` INTEGER PRIMARY KEY AUTOINCREMENT,
+    `Nombre` TEXT NOT NULL
+    );''')
+    conexion.execute('''CREATE TABLE `Libros` (
+    `LibroId` INTEGER PRIMARY KEY AUTOINCREMENT,
+    `Titulo` TEXT NOT NULL,
+    `ISBN` INTEGER NOT NULL,
+    `Editorial` TEXT NOT NULL,
+    `Paginas` INTEGER
+    );''')
+    conexion.execute('''CREATE TABLE `Ejemplares` (
+    `EjemplarId` INTEGER PRIMARY KEY AUTOINCREMENT,
+    `Localizacion` TEXT NOT NULL,
+    `LibroId` INTEGER NOT NULL,
+    FOREIGN KEY (`LibroId`) REFERENCES `Libros` (`LibroId`)
+    );''')
+    conexion.execute('''CREATE TABLE `Escribe` (
+    `EscribeId` INTEGER PRIMARY KEY AUTOINCREMENT,
+    `AutorId` INTEGER NOT NULL,
+    `LibroId` INTEGER NOT NULL,
+    FOREIGN KEY (`AutorId`) REFERENCES `Autores` (`AutorId`),
+    FOREIGN KEY (`LibroId`) REFERENCES `Libros` (`LibroId`)
+    );''')
+    conexion.execute('''CREATE TABLE `Saca` (
+    `PrestamoId` INTEGER PRIMARY KEY AUTOINCREMENT,
+    `EjemplarId` INTEGER NOT NULL,
+    `AlumneId` INTEGER NOT NULL,
+    `FechaPrestamo` DATE NOT NULL,
+    `FechaDevolucion` DATE NOT NULL,
+    FOREIGN KEY (`EjemplarId`) REFERENCES `Ejemplares` (`EjemplarId`),
+    FOREIGN KEY (`AlumneId`) REFERENCES `Alumnes` (`AlumneID`)
+    );''')
+    conexion.close()
+
+def MostrarLibros():
+    conexion = sqlite3.connect('biblio.db')
+    registros=conexion.execute("SELECT * FROM Libros")
+    print("\nTABLA LIBROS:")
+    for i in registros:
+        Id, Titulo,Isbn,Editorial,Paginas= i
+        print("ID: ", Id, ". Titulo: ", Titulo, ". ISBN: ", Isbn, ". Editorial: ", Editorial, ". Paginas: ", Paginas,)
+    conexion.close()
+
+def MostrarEjemplares():
+    conexion = sqlite3.connect('biblio.db')
+    registros=conexion.execute("SELECT * FROM Ejemplares")
+    print("\nTABLA EJEMPLARES:")
+    for i in registros:
+        Id, Localizacion,Libroid= i
+        print("ID: ", Id, ". Localización: ", Localizacion, ". LibroID: ", Libroid,)
+    conexion.close()
+
+def MostrarAutores():
+    conexion = sqlite3.connect('biblio.db')
+    registros=conexion.execute("SELECT * FROM Autores")
+    print("\nTABLA AUTORES:")
+    for i in registros:
+        Id, Nombre= i
+        print("ID: ", Id, ". Nombre: ", Nombre,)
+    conexion.close()
+
+
+#Gestionar els llibres, amb els seus exemplars i autors, de què disposa el centre. Aquesta part suposaria la gestió del catàleg del centre. 
+#Gestionar els socis (alumnes) subscrits al servei de biblioteca.
+#Gestionar els préstecs i devolucions que realitzen diàriament els socis.
+
+def Accio():
+    return int(input("Qué quieres hacer? \n -Agregar (1) \n -Eliminar (2) \n -Modificar (3) \n -Mostrar (4) \n"))
+
+def GestioLlibres():
+    conexion = sqlite3.connect('biblio.db')
+    cursor=conexion.cursor()
+    accio=Accio()
+    if(accio==1):
+        respuesta=int(input("En Libros, Ejemplares o en Ambos? \n -Libros (1) \n -Ejemplares (2) \n -Ambos (3) \n"))
+        if(respuesta==1 or respuesta==3):
+            MostrarLibros()
+            Título= input("Dime el título del libro: ")
+            cursor.execute("SELECT LibroId FROM Libros WHERE Titulo=?", (Título,))
+            existe=cursor.fetchone()
+            if(existe==None):
+                ISBN= int(input("Dime el código ISBN del libro: "))
+                Editorial= input("Dime la editorial del libro: ")
+                Páginas= int(input("Dime cuántas páginas tiene el libro: "))
+                libro= (Título, ISBN, Editorial, Páginas)
+                cursor.execute("INSERT INTO Libros(Titulo, ISBN, Editorial, Paginas) VALUES(?,?,?,?)",libro)
+                LibroId=cursor.lastrowid #te da el ID de la fila que acabas de insertar (last row id)
+                print(f"Libro '{Título}' insertado con éxito, ID: {LibroId}")
+                
+                MostrarAutores()
+                Autor=input("Dime el nombre del autor: ")
+                cursor.execute("SELECT AutorId FROM Autores WHERE Nombre=?", (Autor,))
+                existe=cursor.fetchone()
+                if(existe==None):
+                    cursor.execute("INSERT INTO Autores(Nombre) VALUES(?)",(Autor,))
+                    AutorId=cursor.lastrowid
+                    print(f"Autor '{Autor}' insertado con éxito, ID: {AutorId}")
+                else:
+                    AutorId=existe[0]
+                    print(f"Ya existe y el ID es {AutorId}")
+
+                cursor.execute("INSERT INTO Escribe(AutorId, LibroId) VALUES(?, ?)", (AutorId, LibroId))
+                conexion.commit()
+            else:
+                print("Ese libro ya existe")
+
+        if(respuesta==2 or respuesta==3):
+            MostrarLibros()
+            MostrarEjemplares()
+            if(respuesta==3):
+                print("Ahora añadiremos los ejemplares")
+
+            LibroId= int(input("Dime el ID del libro al cual pertenecerán los ejemplares: "))
+            cursor.execute("SELECT * FROM Libros WHERE LibroId=?", (LibroId,))
+            existe=cursor.fetchone()
+            if(existe!=None):
+                num=int(input("Cuantos ejemplares quieres añadir de este libro? "))
+                for i in range(num):
+                    i+=1
+                    Localizacion= input("Dime la localización del ejemplar: ")  
+                    ejemplar =(Localizacion, LibroId)
+                    conexion.execute("INSERT INTO Ejemplares(Localizacion,LibroId) VALUES(?,?)",ejemplar)
+                    conexion.commit()
+            else:
+                print("No existe ese libro")
+        
+        if(respuesta!=1 and respuesta!=2 and respuesta!=3):
+            print("Esta no es una de las opciones")
+
+        conexion.close()
+        Pregunta()
+        
+    elif(accio==2):
+        respuesta=int(input("Autor, Libros y Ejemplares, Libro y Ejemplares, o solo Ejemplares? \n -Autor, Libros y Ejemplares (1) \n -Libro y Ejemplares (2) \n -Ejemplares (3) \n"))
+        if(respuesta==1):
+            MostrarAutores()
+            Autor=input("Inserta el nombre del autor que deseas eliminar: ")
+            cursor.execute("SELECT AutorId FROM Autores WHERE Nombre=?", (Autor,))
+            existe=cursor.fetchone()
+            if(existe!=None):
+                conexion.execute("DELETE FROM Ejemplares WHERE LibroId IN (SELECT LibroId FROM Escribe WHERE AutorId IN(SELECT AutorId FROM Autores WHERE Nombre=(?)))", (Autor,))
+                conexion.execute("DELETE FROM Libros WHERE LibroId IN (SELECT LibroId FROM Escribe WHERE AutorId IN(SELECT AutorId FROM Autores WHERE Nombre=(?)))", (Autor,))
+                conexion.execute("DELETE FROM Escribe WHERE AutorId IN (SELECT AutorId FROM Autores WHERE Nombre=(?))", (Autor,))
+                conexion.execute("DELETE FROM Autores WHERE Nombre=(?)", (Autor,))
+                conexion.commit()
+                print("Eliminado correctamente.")
+            else:
+                print(f"No existe {Autor}")
+
+        if(respuesta==2):
+            MostrarLibros()
+            Titulo=input("Inserta el título del libro que deseas eliminar: ")
+            cursor.execute("SELECT LibroId FROM Libros WHERE Titulo=?", (Título,))
+            existe=cursor.fetchone()
+            if(existe!=None):
+                conexion.execute("DELETE FROM Ejemplares WHERE LibroId IN (SELECT LibroId FROM Libros WHERE Titulo = ?)", (Titulo,))
+                conexion.execute("DELETE FROM Escribe WHERE LibroId IN (SELECT LibroId FROM Libros WHERE Titulo = ?)", (Titulo,))
+                conexion.execute("DELETE FROM Libros WHERE Titulo = ?", (Titulo,))
+                conexion.commit()
+                print("Eliminado correctamente.")
+            else:
+                print(f"No existe {Titulo}")
+            
+        if(respuesta==3):
+            MostrarEjemplares()
+            Ejemplar=int(input("Inserta el id del ejemplar que deseas eliminar: "))
+            cursor.execute("SELECT EjemplarId FROM Ejemplares WHERE EjemplarId=?", (Ejemplar,))
+            existe=cursor.fetchone()
+            if(existe!=None):
+                conexion.execute("DELETE FROM Ejemplares WHERE EjemplarId = ?", (Ejemplar,))
+                conexion.commit()
+                print("Eliminado correctamente.")
+            else:
+                print(f"No existe el ejemplar {Ejemplar}")   
+
+        if(respuesta!=1 and respuesta!=2 and respuesta!=3):
+            print("Esta no es una de las opciones")
+
+        conexion.close()
+        Pregunta()
+
+    elif(accio==3):
+        # Modificar el campo 'tlf' del registro
+        dni = '43064095E'
+        nuevo_tlf = 777888999
+        conexion.execute("UPDATE contactos SET tlf = ? WHERE dni = ?", (nuevo_tlf, dni))
+
+        # Guardar los cambios
+        conexion.commit()
+
+        # Cierre de la conexión a la base de datos
+        conexion.close()
+
+        Pregunta()
+    
+    elif(accio==4):
+        resposta=int(input("Libros, Ejemplares o Autores? \n -Libros (1) \n -Ejemplares (2) \n -Autores (3) \n"))
+        if(resposta==1):
+            MostrarLibros()
+        elif(resposta==2):
+            MostrarEjemplares()
+        elif(resposta==3):
+            MostrarAutores()
+        else:
+            print("Esta no es una de las opciones")            
+        Pregunta()
+
+    else:
+        print("Esta no es una de las opciones")
+        Accio()
+    
+
+def GestioSocis():
+    print("las cosas")
+
+def GestioPrestecs():
+    print("las cosas")
+
+def Pregunta():
+    taula=int(input("Qué quieres gestionar? \n -Salir (0) \n -Libros/Ejemplares (1) \n -Socios (2) \n -Préstamos (3) \n -Crear BD (4) \n"))
+    if(taula==1):
+        GestioLlibres()
+
+    elif(taula==2):
+        GestioSocis()
+
+    elif(taula==3):
+        GestioPrestecs()
+
+    elif(taula==4):
+        CrearBD()
+
+    elif(taula==0):
+        return
+
+    else:
+        print("Esta no es una de las opciones")
+        Pregunta()
+
+Pregunta()
