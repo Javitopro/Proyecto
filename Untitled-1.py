@@ -70,6 +70,24 @@ def MostrarAutores():
         print("ID: ", Id, ". Nombre: ", Nombre,)
     conexion.close()
 
+def MostrarAlumnos():
+    conexion = sqlite3.connect('biblio.db')
+    registros=conexion.execute("SELECT * FROM Alumnes")
+    print("\nTABLA ALUMNOS:")
+    for i in registros:
+        Id, Nombre,Telefono,Direccion= i
+        print("ID: ", Id, ". Nombre: ", Nombre, ". Teléfono: ", Telefono, ". Dirección: ", Direccion,)
+    conexion.close()
+
+def MostrarPrestamos():
+    conexion = sqlite3.connect('biblio.db')
+    registros=conexion.execute("SELECT * FROM Saca")
+    print("\nTABLA PRÉSTAMOS:")
+    for i in registros:
+        Id, EjemplarId,AlumneId,FechaPrestamo,FechaDevolucion= i
+        print("ID: ", Id, ". EjemplarID: ", EjemplarId, ". AlumneID: ", AlumneId, ". Fecha de préstamo: ", FechaPrestamo, ". Fecha de devolución: ", FechaDevolucion,)
+    conexion.close()
+
 
 #Gestionar els llibres, amb els seus exemplars i autors, de què disposa el centre. Aquesta part suposaria la gestió del catàleg del centre. 
 #Gestionar els socis (alumnes) subscrits al servei de biblioteca.
@@ -255,10 +273,67 @@ def GestionLibros():
     
 
 def GestionAlumnos():
-    print("las cosas")
+    conexion = sqlite3.connect('biblio.db')
+    cursor=conexion.cursor()
+    accio=Accio()
+    if(accio==1):
+        Nombre= input("Dime el nombre del alumno: ")
+        cursor.execute("SELECT AlumneID FROM Alumnes WHERE Nombre=?", (Nombre,))
+        existe=cursor.fetchone()
+        if(existe==None):
+            Telefono= int(input("Dime el teléfono del alumno: "))
+            Direccion= input("Dime la dirección del alumno: ")
+            alumno= (Nombre, Telefono, Direccion)
+            cursor.execute("INSERT INTO Alumnes(Nombre, Telefono, Direccion) VALUES(?,?,?)",alumno)
+            conexion.commit()
+        else:
+            print("Ese alumno ya existe")
+        conexion.close()
+        Pregunta()
 
 def GestionPrestamos():
-    print("las cosas")
+    conexion = sqlite3.connect('biblio.db')
+    cursor=conexion.cursor()
+    accio=Accio()
+    if(accio==1):
+        MostrarEjemplares()
+        MostrarAlumnos()
+        EjemplarId= int(input("Dime el ID del ejemplar que se ha prestado: "))
+        cursor.execute("SELECT EjemplarId FROM Ejemplares WHERE EjemplarId=?", (EjemplarId,))
+        existe=cursor.fetchone()
+        if(existe!=None):
+            AlumneId= int(input("Dime el ID del alumno que ha cogido el ejemplar: "))
+            cursor.execute("SELECT AlumneId FROM Alumnes WHERE AlumneId=?", (AlumneId,))
+            existe=cursor.fetchone()
+            if(existe!=None):
+                FechaPrestamo= input("Dime la fecha de préstamo (YYYY-MM-DD): ")
+                FechaDevolucion= input("Dime la fecha de devolución (YYYY-MM-DD): ")
+                prestamo= (EjemplarId, AlumneId, FechaPrestamo, FechaDevolucion)
+                cursor.execute("INSERT INTO Saca(EjemplarId, AlumneId, FechaPrestamo, FechaDevolucion) VALUES(?,?,?,?)",prestamo)
+                conexion.commit()
+            else:
+                print("Ese alumno no existe")
+        else:
+            print("Ese ejemplar no existe")
+        conexion.close()
+        Pregunta()
+
+    elif(accio==2):
+        MostrarPrestamos()
+        PrestamoId= int(input("Dime el ID del préstamo que quieres eliminar: "))
+        cursor.execute("SELECT PrestamoId FROM Saca WHERE PrestamoId=?", (PrestamoId,))
+        existe=cursor.fetchone()
+        if(existe!=None):
+            conexion.execute("DELETE FROM Saca WHERE PrestamoId = ?", (PrestamoId,))
+            conexion.commit()
+            print("Eliminado correctamente.")
+        else:
+            print(f"No existe el préstamo {PrestamoId}")
+        conexion.close()
+        Pregunta()
+
+    elif(accio==3):
+        print("lascosas")
 
 def Pregunta():
     taula=int(input("Qué quieres gestionar? \n -Salir (0) \n -Libros/Ejemplares (1) \n -Socios (2) \n -Préstamos (3) \n -Crear BD (4) \n"))
