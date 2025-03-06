@@ -49,7 +49,7 @@ def MostrarLibros():
     print("\nTABLA LIBROS:")
     for i in registros:
         Id, Titulo,Isbn,Editorial,Paginas= i
-        print("ID: ", Id, ". Titulo: ", Titulo, ". ISBN: ", Isbn, ". Editorial: ", Editorial, ". Paginas: ", Paginas,)
+        print("ID: ", Id, "| Titulo: ", Titulo, "| ISBN: ", Isbn, "| Editorial: ", Editorial, "| Paginas: ", Paginas,)
     conexion.close()
 
 def MostrarEjemplares():
@@ -58,7 +58,7 @@ def MostrarEjemplares():
     print("\nTABLA EJEMPLARES:")
     for i in registros:
         Id, Localizacion,Libroid= i
-        print("ID: ", Id, ". Localización: ", Localizacion, ". LibroID: ", Libroid,)
+        print("ID: ", Id, "| Localización: ", Localizacion, "| LibroID: ", Libroid,)
     conexion.close()
 
 def MostrarAutores():
@@ -67,7 +67,7 @@ def MostrarAutores():
     print("\nTABLA AUTORES:")
     for i in registros:
         Id, Nombre= i
-        print("ID: ", Id, ". Nombre: ", Nombre,)
+        print("ID: ", Id, "| Nombre: ", Nombre,)
     conexion.close()
 
 def MostrarAlumnos():
@@ -76,7 +76,7 @@ def MostrarAlumnos():
     print("\nTABLA ALUMNOS:")
     for i in registros:
         Id, Nombre,Telefono,Direccion= i
-        print("ID: ", Id, ". Nombre: ", Nombre, ". Teléfono: ", Telefono, ". Dirección: ", Direccion,)
+        print("ID: ", Id, "| Nombre: ", Nombre, "| Teléfono: ", Telefono, "| Dirección: ", Direccion,)
     conexion.close()
 
 def MostrarPrestamos():
@@ -85,7 +85,7 @@ def MostrarPrestamos():
     print("\nTABLA PRÉSTAMOS:")
     for i in registros:
         Id, EjemplarId,AlumneId,FechaPrestamo,FechaDevolucion= i
-        print("ID: ", Id, ". EjemplarID: ", EjemplarId, ". AlumneID: ", AlumneId, ". Fecha de préstamo: ", FechaPrestamo, ". Fecha de devolución: ", FechaDevolucion,)
+        print("ID: ", Id, "| EjemplarID: ", EjemplarId, "| AlumneID: ", AlumneId, "| Fecha de préstamo: ", FechaPrestamo, "| Fecha de devolución: ", FechaDevolucion,)
     conexion.close()
 
 
@@ -95,13 +95,17 @@ def MostrarPrestamos():
 
 
 def Accio():
-    return int(input("Qué quieres hacer? \n -Agregar (1) \n -Eliminar (2) \n -Modificar (3) \n -Mostrar (4) \n"))
+    return int(input("Qué quieres hacer? \n -Volver (0) \n -Agregar (1) \n -Eliminar (2) \n -Modificar (3) \n -Mostrar (4) \n"))
 
 def GestionLibros():
     conexion = sqlite3.connect('biblio.db')
     cursor=conexion.cursor()
     accio=Accio()
-    if(accio==1):
+    if(accio==0):
+        conexion.close()
+        Pregunta()
+
+    elif(accio==1):
         respuesta=int(input("En Libros, Ejemplares o en Ambos? \n -Libros (1) \n -Ejemplares (2) \n -Ambos (3) \n"))
         if(respuesta==1 or respuesta==3):
             MostrarLibros()
@@ -168,10 +172,10 @@ def GestionLibros():
             cursor.execute("SELECT AutorId FROM Autores WHERE AutorId=?", (Autor,))
             existe=cursor.fetchone()
             if(existe!=None):
-                conexion.execute("DELETE FROM Ejemplares WHERE LibroId IN (SELECT LibroId FROM Escribe WHERE AutorId IN(SELECT AutorId FROM Autores WHERE Nombre=(?)))", (Autor,))
-                conexion.execute("DELETE FROM Libros WHERE LibroId IN (SELECT LibroId FROM Escribe WHERE AutorId IN(SELECT AutorId FROM Autores WHERE Nombre=(?)))", (Autor,))
-                conexion.execute("DELETE FROM Escribe WHERE AutorId IN (SELECT AutorId FROM Autores WHERE Nombre=(?))", (Autor,))
-                conexion.execute("DELETE FROM Autores WHERE Nombre=(?)", (Autor,))
+                conexion.execute("DELETE FROM Ejemplares WHERE LibroId IN (SELECT LibroId FROM Escribe WHERE AutorId=(?))", (Autor,))
+                conexion.execute("DELETE FROM Libros WHERE LibroId IN (SELECT LibroId FROM Escribe WHERE AutorId=(?))", (Autor,))
+                conexion.execute("DELETE FROM Escribe WHERE AutorId=(?)", (Autor,))
+                conexion.execute("DELETE FROM Autores WHERE AutorId=(?)", (Autor,))
                 conexion.commit()
                 print("Eliminado correctamente.")
             else:
@@ -276,7 +280,11 @@ def GestionAlumnos():
     conexion = sqlite3.connect('biblio.db')
     cursor=conexion.cursor()
     accio=Accio()
-    if(accio==1):
+    if(accio==0):
+        conexion.close()
+        Pregunta()
+        
+    elif(accio==1):
         Nombre= input("Dime el nombre del alumno: ")
         cursor.execute("SELECT AlumneID FROM Alumnes WHERE Nombre=?", (Nombre,))
         existe=cursor.fetchone()
@@ -291,11 +299,54 @@ def GestionAlumnos():
         conexion.close()
         Pregunta()
 
+    elif(accio==2):
+        MostrarAlumnos()
+        AlumneId= int(input("Dime el ID del alumno que quieres eliminar: "))
+        cursor.execute("SELECT AlumneId FROM Alumnes WHERE AlumneId=?", (AlumneId,))
+        existe=cursor.fetchone()
+        if(existe!=None):
+            conexion.execute("DELETE FROM Alumnes WHERE AlumneId = ?", (AlumneId,))
+            conexion.commit()
+            print("Eliminado correctamente.")
+        else:
+            print(f"No existe el alumno {AlumneId}")
+        conexion.close()
+        Pregunta()
+
+    elif(accio==3):
+        MostrarAlumnos()
+        AlumneId= int(input("Dime el ID del alumno que quieres modificar: "))
+        cursor.execute("SELECT * FROM Alumnes WHERE AlumneId=?", (AlumneId,))
+        existe=cursor.fetchone()
+        if(existe!=None):
+            nuevo_telefono= int(input("Dime el nuevo teléfono del alumno: "))
+            nueva_direccion= input("Dime la nueva dirección del alumno: ")
+            conexion.execute("UPDATE Alumnes SET Telefono=?, Direccion=? WHERE AlumneId=?", (nuevo_telefono, nueva_direccion, AlumneId))
+            conexion.commit()
+            print("Modificado correctamente.")
+        else:
+            print("No existe ese alumno")
+        conexion.close()
+        Pregunta()
+
+    elif(accio==4):
+        MostrarAlumnos()
+        conexion.close()
+        Pregunta()
+
+    else:
+        print("Esta no es una de las opciones")
+        Accio()
+
 def GestionPrestamos():
     conexion = sqlite3.connect('biblio.db')
     cursor=conexion.cursor()
     accio=Accio()
-    if(accio==1):
+    if(accio==0):
+        conexion.close()
+        Pregunta()
+
+    elif(accio==1):
         MostrarEjemplares()
         MostrarAlumnos()
         EjemplarId= int(input("Dime el ID del ejemplar que se ha prestado: "))
@@ -347,8 +398,17 @@ def GestionPrestamos():
         conexion.close()
         Pregunta()
 
+    elif(accio==4):
+        MostrarPrestamos()
+        conexion.close()
+        Pregunta()
+    
+    else:
+        print("Esta no es una de las opciones")
+        Accio()
+
 def Pregunta():
-    taula=int(input("Qué quieres gestionar? \n -Salir (0) \n -Libros/Ejemplares (1) \n -Socios (2) \n -Préstamos (3) \n -Crear BD (4) \n"))
+    taula=int(input("Qué quieres gestionar? \n -Salir (0) \n -Libros/Ejemplares/Autores (1) \n -Socios (2) \n -Préstamos (3) \n -Crear BD (4) \n"))
     if(taula==1):
         GestionLibros()
 
@@ -359,7 +419,11 @@ def Pregunta():
         GestionPrestamos()
 
     elif(taula==4):
-        CrearBD()
+        seguro=input("Estás seguro de que quieres crear la base de datos? \n -No (0) \n -Sí (1) \n")
+        if(seguro=="1"):
+            CrearBD()
+        elif(seguro=="0"):
+            Pregunta()
 
     elif(taula==0):
         return
