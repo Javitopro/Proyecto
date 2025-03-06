@@ -164,8 +164,8 @@ def GestionLibros():
         respuesta=int(input("Autor, Libros y Ejemplares, Libro y Ejemplares, o solo Ejemplares? \n -Autor, Libros y Ejemplares (1) \n -Libro y Ejemplares (2) \n -Ejemplares (3) \n"))
         if(respuesta==1):
             MostrarAutores()
-            Autor=input("Inserta el nombre del autor que deseas eliminar: ")
-            cursor.execute("SELECT AutorId FROM Autores WHERE Nombre=?", (Autor,))
+            Autor=input("Inserta el ID del autor que deseas eliminar: ")
+            cursor.execute("SELECT AutorId FROM Autores WHERE AutorId=?", (Autor,))
             existe=cursor.fetchone()
             if(existe!=None):
                 conexion.execute("DELETE FROM Ejemplares WHERE LibroId IN (SELECT LibroId FROM Escribe WHERE AutorId IN(SELECT AutorId FROM Autores WHERE Nombre=(?)))", (Autor,))
@@ -333,7 +333,19 @@ def GestionPrestamos():
         Pregunta()
 
     elif(accio==3):
-        print("lascosas")
+        MostrarPrestamos()
+        PrestamoId= int(input("Dime el ID del préstamo que quieres modificar: "))
+        cursor.execute("SELECT * FROM Saca WHERE PrestamoId=?", (PrestamoId,))
+        existe=cursor.fetchone()
+        if(existe!=None):
+            nueva_fecha_devolucion= input("Dime la nueva fecha de devolución (YYYY-MM-DD): ")
+            conexion.execute("UPDATE Saca SET FechaDevolucion=? WHERE PrestamoId=?", (nueva_fecha_devolucion, PrestamoId))
+            conexion.commit()
+            print("Modificado correctamente.")
+        else:
+            print("No existe ese préstamo")
+        conexion.close()
+        Pregunta()
 
 def Pregunta():
     taula=int(input("Qué quieres gestionar? \n -Salir (0) \n -Libros/Ejemplares (1) \n -Socios (2) \n -Préstamos (3) \n -Crear BD (4) \n"))
